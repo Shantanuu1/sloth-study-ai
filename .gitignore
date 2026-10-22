@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Local settings and secrets
+.env
+.env.*
+!.env.example
+
+# Your own lecture notes - never commit them
+my-notes/
+uploads/
+notes/
+*.private.*
+
+# Model files (they are huge and live in Ollama's own folder anyway)
+*.gguf
+*.safetensors
+*.bin
+models/
+.ollama/
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log

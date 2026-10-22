@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sloth Study</title>
+  <meta name="description" content="Notes in, flashcards out. A local-first study assistant powered by Gemma 4 running on your own laptop through Ollama.">
+  <link rel="icon" href="{{ url_for('static', filename='sloth.svg') }}" type="image/svg+xml">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="brand">
+      <img src="{{ url_for('static', filename='sloth.svg') }}" alt="" width="52" height="52">
+      <div>
+        <h1>Sloth Study</h1>
+        <p class="tagline">notes in, flashcards out</p>
+      </div>
+    </div>
+    <div id="model-status" class="status-pill" role="status" aria-live="polite">
+      <span class="dot" aria-hidden="true"></span>
+      <span id="status-text">Checking local AI…</span>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- Error message (hidden until something goes wrong) -->
+    <section id="error-panel" class="card error-card" hidden role="alert">
+      <div>
+        <h2>That didn't work</h2>
+        <p id="error-message"></p>
+      </div>
+      <button type="button" id="error-dismiss" class="btn btn-ghost">Dismiss</button>
+    </section>
+
+    <!-- Step 0: upload -->
+    <section id="upload-panel" class="card upload-card" aria-labelledby="upload-title">
+      <h2 id="upload-title">Turn your notes into study material</h2>
+      <p class="lead">Upload lecture notes and Sloth Study writes a summary, a deck of flashcards and a five-question quiz. Slowly, steadily, and entirely on your own laptop.</p>
+
+      <form id="upload-form" novalidate>
+        <label for="file-input" id="dropzone" class="dropzone">
+          <input id="file-input" type="file" name="file" accept=".pdf,.txt,application/pdf,text/plain" class="visually-hidden">
+          <svg class="dz-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0l-4.5 4.5M12 4l4.5 4.5M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="dz-title">Drop a PDF or TXT file here, or <span class="link-like">browse</span></span>
+          <span class="dz-hint">Up to {{ max_upload_mb }} MB · PDFs must contain selectable text (scanned pages aren't supported)</span>
+          <span id="file-chip" class="file-chip" hidden></span>
+        </label>
+        <p id="upload-message" class="form-message" role="status"></p>
+
+        <div class="actions">
+          <button type="submit" id="generate-btn" class="btn btn-primary">Generate study material</button>
+          <button type="button" id="sample-btn" class="btn btn-ghost">Try the demo notes</button>
+        </div>
+        <p id="setup-hint" class="setup-hint" hidden></p>
+      </form>
+
+      <p class="privacy-note">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 11V8a5 5 0 0 1 10 0v3M6 11h12v9H6z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+        <span><strong>Private by design.</strong> Your file is read in memory, sent only to Ollama on this computer, and never saved. Nothing is sent to a cloud AI.</span>
+      </p>
+    </section>
+
+    <!-- Loading -->
+    <section id="loading-panel" class="card state-card" hidden aria-live="polite">
+      <img class="sloth-loader" src="{{ url_for('static', filename='sloth.svg') }}" alt="" width="88" height="88">
+      <h2>Gemma 4 is reading your notes…</h2>
+      <p>It writes the summary, flashcards and quiz in one go. On an 8 GB laptop this can take a few minutes, so keep this tab open.</p>
+      <p class="elapsed">Elapsed <span id="elapsed">0:00</span></p>
+      <div class="progress" aria-hidden="true"><span></span></div>
+    </section>
+
+    <!-- Results -->
+    <section id="results" hidden aria-labelledby="results-title">
+      <div class="card results-head">
+        <div>
+          <p class="eyebrow" id="source-label"></p>
+          <h2 id="results-title" tabindex="-1">Your study set is ready</h2>
+          <p id="source-meta" class="muted"></p>
+        </div>
+        <button type="button" id="new-upload-btn" class="btn btn-ghost">Upload another file</button>
+      </div>
+
+      <div class="tabs" role="tablist" aria-label="Study sections">
+        <button type="button" role="tab" id="tab-summary" data-tab="summary" aria-controls="panel-summary" aria-selected="true"><span class="step">1</span> Summary</button>
+        <button type="button" role="tab" id="tab-flashcards" data-tab="flashcards" aria-controls="panel-flashcards" aria-selected="false" tabindex="-1"><span class="step">2</span> Flashcards</button>
+        <button type="button" role="tab" id="tab-quiz" data-tab="quiz" aria-controls="panel-quiz" aria-selected="false" tabindex="-1"><span class="step">3</span> Quiz</button>
+      </div>
+
+      <!-- 1. Summary -->
+      <section id="panel-summary" role="tabpanel" aria-labelledby="tab-summary" class="card panel">
+        <h3>Overview</h3>
+        <p id="summary-overview" class="overview"></p>
+
+        <h3>Key points</h3>
+        <ol id="summary-points" class="points"></ol>
+
+        <div id="definitions-block">
+          <h3>Definitions</h3>
+          <dl id="summary-definitions" class="definitions"></dl>
+        </div>
+
+        <h3>Key takeaways</h3>
+        <ul id="summary-takeaways" class="takeaways"></ul>
+
+        <div class="panel-foot">
+          <button type="button" class="btn btn-primary" data-goto="flashcards">Next: flashcards →</button>
+        </div>
+      </section>
+
+      <!-- 2. Flashcards -->
+      <section id="panel-flashcards" role="tabpanel" aria-labelledby="tab-flashcards" class="card panel" hidden>
+        <p class="muted center">Click the card (or press Space) to flip it. Use the ← and → keys to move between cards.</p>
+        <button type="button" id="flashcard" class="flashcard">
+          <span class="flashcard-inner">
+            <span class="face front" id="card-front">
+              <span class="face-label">Question</span>
+              <span id="card-question" class="face-text"></span>
+              <span class="face-hint">Tap to reveal the answer</span>
+            </span>
+            <span class="face back" id="card-back" aria-hidden="true">
+              <span class="face-label">Answer</span>
+              <span id="card-answer" class="face-text"></span>
+            </span>
+          </span>
+        </button>
+        <div class="card-controls">
+          <button type="button" id="prev-card" class="btn btn-ghost">← Previous</button>
+          <span id="card-counter" class="counter" aria-live="polite"></span>
+          <button type="button" id="next-card" class="btn btn-ghost">Next →</button>
+        </div>
+        <div class="panel-foot">
+          <button type="button" class="btn btn-primary" data-goto="quiz">Next: take the quiz →</button>
+        </div>
+      </section>
+
+      <!-- 3. Quiz -->
+      <section id="panel-quiz" role="tabpanel" aria-labelledby="tab-quiz" class="card panel" hidden>
+        <div id="quiz-result" class="quiz-result" hidden tabindex="-1">
+          <p class="score"><span id="score-value"></span></p>
+          <p id="score-percent" class="score-percent"></p>
+          <p id="score-comment"></p>
+        </div>
+        <form id="quiz-form" novalidate>
+          <div id="quiz-questions"></div>
+          <p id="quiz-message" class="form-message" role="status"></p>
+          <div class="actions">
+            <button type="submit" id="quiz-submit" class="btn btn-primary">Submit quiz</button>
+            <button type="button" id="quiz-retake" class="btn btn-ghost" hidden>Retake quiz</button>
+          </div>
+        </form>
+      </section>
+
+      <p id="ai-credit" class="ai-credit"></p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p><strong>Local AI, private notes.</strong> Sloth Study uses Gemma 4 running on this computer through Ollama. Your notes are processed in memory, never stored, and never sent to a cloud AI service.</p>
+    <p>AI can make mistakes. Check important facts against your own notes.</p>
+  </footer>
+
+  <script src="{{ url_for('static', filename='script.js') }}" defer></script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Sloth Study">
+  <path d="M38 3c9 0 13 6 13 11-8 1-13-4-13-11z" fill="#3f7a57"/>
+  <circle cx="32" cy="34" r="28" fill="#8a6a4f"/>
+  <ellipse cx="32" cy="37" rx="22" ry="18" fill="#f1e2c6"/>
+  <ellipse cx="22" cy="35" rx="8.5" ry="5.5" transform="rotate(-18 22 35)" fill="#4a3628"/>
+  <ellipse cx="42" cy="35" rx="8.5" ry="5.5" transform="rotate(18 42 35)" fill="#4a3628"/>
+  <path d="M18.5 35q3 2.6 6 0M39.5 35q3 2.6 6 0" stroke="#f1e2c6" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <ellipse cx="32" cy="42" rx="3.6" ry="2.6" fill="#3b2a1f"/>
+  <path d="M28 47q4 3 8 0" stroke="#3b2a1f" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+</svg>

@@ -1,0 +1,25 @@
+The Science of Effective Studying - Lecture Notes (Demo)
+
+1. Why rereading feels good but works poorly
+Rereading a textbook or highlighting notes creates a feeling of familiarity. Familiarity is not the same as being able to remember something later. Psychologists call this the "illusion of competence": material looks easy because you recognise it, not because you can recall it without help.
+
+2. Active recall
+Active recall means trying to retrieve information from memory instead of looking at it again. Examples include answering questions without notes, explaining a topic out loud, and using flashcards. Each time you successfully retrieve a fact, the memory becomes stronger and easier to find next time. This is often called the testing effect: being tested improves long-term memory more than spending the same time restudying.
+
+3. The forgetting curve
+In the 1880s, Hermann Ebbinghaus measured how quickly he forgot lists of nonsense syllables. He found that most forgetting happens soon after learning, and then the rate of forgetting slows down. This pattern is called the forgetting curve. Reviewing material at the right moments flattens the curve, so you keep more of what you learned.
+
+4. Spaced repetition
+Spaced repetition means reviewing material over increasing intervals, for example after one day, three days, one week and two weeks. Spreading practice out over time leads to better long-term retention than cramming the same amount of study into one session. This is known as the spacing effect. Flashcard apps often schedule reviews automatically: cards you find easy appear less often, and cards you find hard appear more often.
+
+5. Interleaving
+Interleaving means mixing different topics or types of problems in one study session, instead of practising one type at a time (called blocked practice). Interleaving feels harder, but it helps students learn to choose the right method for each problem.
+
+6. Elaboration
+Elaboration means explaining ideas in your own words and connecting them to things you already know. Asking "why does this work?" and "how is this related to what I learned last week?" builds a richer network of memories.
+
+7. Desirable difficulties
+Robert Bjork used the term "desirable difficulties" for learning strategies that feel harder in the moment but improve long-term learning. Active recall, spacing and interleaving are all examples. If studying feels slightly effortful, that is often a sign that real learning is happening.
+
+8. Putting it together
+A good study routine: (a) summarise the lecture briefly, (b) turn key ideas into questions or flashcards, (c) test yourself without looking, (d) check the answers and note mistakes, and (e) review again a few days later. Sleep also matters, because memories are consolidated during sleep.

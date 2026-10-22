@@ -216,6 +216,12 @@ Ollama itself is a separate program. Keep it on its default local-only setting: 
 - Quizzes live in server memory, so restarting `app.py` expires any open quiz. Generate again to get a new one.
 - The app is single-user and meant to run on your own computer. It isn't a hosted multi-user service.
 
+
+##graphify
+<img width="1380" height="855" alt="Screenshot 2026-10-22 180250" src="https://github.com/user-attachments/assets/5afafe07-6b96-4c10-abaf-f844a03e8277" />
+
+
+
 ## About "deployment"
 
 Sloth Study is meant to run **on the student's own computer**. That's the privacy point. Hosting it on a public server would mean running Gemma 4 on that server and sending students' notes to it, which this project deliberately avoids. The GitHub repository is the deliverable: anyone can clone it, install Ollama and run it locally in a few minutes. GitHub Actions runs the test suite on every push (`.github/workflows/tests.yml`).

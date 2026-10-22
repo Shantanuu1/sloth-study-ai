@@ -762,4 +762,5 @@ if __name__ == "__main__":
     print("  Stop  : press Ctrl + C in this window")
     print()
     # 127.0.0.1 means only this computer can open the app.
-    app.run(host="127.0.0.1", port=port, debug=False)
+    # load_dotenv=False: we read .env ourselves, so Flask doesn't need python-dotenv.
+    app.run(host="127.0.0.1", port=port, debug=False, load_dotenv=False)

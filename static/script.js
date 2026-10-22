@@ -55,10 +55,23 @@
     scorePercent: $("score-percent"),
     scoreComment: $("score-comment"),
     aiCredit: $("ai-credit"),
+    askSource: $("ask-source"),
+    askThread: $("ask-thread"),
+    askEmpty: $("ask-empty"),
+    askForm: $("ask-form"),
+    askInput: $("ask-input"),
+    askCount: $("ask-count"),
+    askSubmit: $("ask-submit"),
+    askMessage: $("ask-message"),
   };
   const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
 
-  const state = { file: null, cards: [], cardIndex: 0, flipped: false, quiz: null, timer: null };
+  const state = {
+    file: null, cards: [], cardIndex: 0, flipped: false, quiz: null, timer: null,
+    // "Ask Your Notes": the server-side document id, whether a question is running, and an
+    // "epoch" that changes whenever the document changes so late answers can be ignored.
+    notesId: null, asking: false, askEpoch: 0, askTimer: null,
+  };
 
   // ---------- small helpers ----------
 
@@ -101,11 +114,14 @@
     return data;
   }
 
- function showError(message) {
-    const errorText = String(message || "An unexpected error occurred.");
-    els.errorMessage.textContent = errorText;
-    els.errorPanel.hidden = false;
-    els.errorPanel.scrollIntoView({ block: "nearest" });
+  function showError(message) {
+    els.uploadMessage.textContent = String(
+        message || "An unexpected error occurred."
+    );
+}
+
+function hideError() {
+    els.uploadMessage.textContent = "";
 }
 
 
@@ -212,6 +228,7 @@
 
   async function generate(formData) {
     hideError();
+    forgetNotes(); // a new upload must never reuse the previous document's context
     els.generateBtn.disabled = true;
     els.sampleBtn.disabled = true;
     els.uploadPanel.hidden = true;
@@ -221,6 +238,7 @@
     try {
       const data = await requestJSON("/api/generate", { method: "POST", body: formData });
       renderResults(data);
+      startAsking(data);
       els.loadingPanel.hidden = true;
       els.results.hidden = false;
       selectTab("summary");
@@ -240,9 +258,10 @@
     }
   }
 
-  els.errorDismiss.addEventListener("click", hideError);
+
 
   els.newUploadBtn.addEventListener("click", () => {
+    forgetNotes();
     els.results.hidden = true;
     els.uploadPanel.hidden = false;
     els.fileInput.value = "";
@@ -474,6 +493,173 @@
   els.quizRetake.addEventListener("click", () => {
     renderQuiz();
     els.quizQuestions.querySelector("input").focus();
+  });
+
+  // ---------- ask your notes ----------
+
+  function forgetNotes() {
+    const id = state.notesId;
+    state.notesId = null;
+    state.askEpoch += 1; // any answer still on its way belongs to the old document
+    resetAskUI();
+    if (id) {
+      // Best effort: tell the server to drop the old document. Failing here is harmless.
+      fetch(`/api/notes/${encodeURIComponent(id)}`, { method: "DELETE" }).catch(() => {});
+    }
+  }
+
+  function resetAskUI() {
+    clearInterval(state.askTimer);
+    state.askTimer = null;
+    state.asking = false;
+    els.askSubmit.disabled = false;
+    els.askThread.replaceChildren(els.askEmpty);
+    els.askEmpty.hidden = false;
+    els.askInput.value = "";
+    els.askCount.textContent = "0 / 500";
+    els.askMessage.textContent = "";
+  }
+
+  function startAsking(data) {
+    state.notesId = data.notes_id || null;
+    resetAskUI();
+    const source = data.source;
+    els.askSource.textContent = source.is_sample
+      ? "Asking about: the built-in demo notes (not your own file)."
+      : `Asking about: ${source.filename}`;
+  }
+
+  // Shows AI text safely: only textContent. ``` fences become a code block, blank lines split paragraphs.
+  function renderRichText(container, text) {
+    String(text).split("```").forEach((part, index) => {
+      if (index % 2 === 1) {
+        const pre = make("pre", "ask-code");
+        pre.append(make("code", null, part.replace(/^[A-Za-z0-9_+-]*\n/, "").replace(/\s+$/, "")));
+        container.append(pre);
+      } else {
+        part.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean).forEach((p) => container.append(make("p", null, p)));
+      }
+    });
+  }
+
+  function addTurn(question, allowGeneral) {
+    els.askEmpty.hidden = true;
+    const turn = make("div", "ask-turn");
+    const q = make("div", "ask-q");
+    q.append(make("span", "ask-who", "You"), make("p", null, question));
+    if (allowGeneral) q.append(make("p", "ask-meta", "I asked for a general explanation outside my notes."));
+    const a = make("div", "ask-a is-pending");
+    a.append(make("span", "ask-who", "Gemma"));
+    const waiting = make("p", "ask-waiting", "Searching your notes…");
+    a.append(waiting);
+    turn.append(q, a);
+    els.askThread.append(turn);
+    turn.scrollIntoView({ block: "nearest" });
+    return { answer: a, waiting };
+  }
+
+  function fillAnswer(box, data, question, allowedGeneral) {
+    box.answer.classList.remove("is-pending");
+    box.answer.classList.toggle("is-not-found", !data.found);
+    box.answer.replaceChildren(make("span", "ask-who", "Gemma"));
+    const body = make("div", "ask-body");
+    renderRichText(body, data.answer);
+    box.answer.append(body);
+
+    if (data.general_explanation) {
+      const general = make("div", "ask-general");
+      general.append(make("strong", null, "General knowledge (not from your notes)"));
+      renderRichText(general, data.general_explanation);
+      box.answer.append(general);
+    } else if (!data.found && !allowedGeneral) {
+      const more = make("button", "btn btn-ghost ask-general-btn", "Explain it in general (not from my notes)");
+      more.type = "button";
+      more.addEventListener("click", () => {
+        more.disabled = true;
+        askQuestion(question, true);
+      });
+      box.answer.append(more);
+    }
+
+    const c = data.context || {};
+    let meta = c.whole_document
+      ? "Answered from your whole document."
+      : `Answered from ${c.passages_used} of ${c.passages_total} passages of your notes.`;
+    if (c.notes_truncated) meta += " (Very long file: only the first part was kept for questions.)";
+    box.answer.append(make("p", "ask-meta", `${meta} Generated by ${data.model} locally in ${Math.round(data.seconds)} seconds.`));
+  }
+
+  function failAnswer(box, message) {
+    box.answer.classList.remove("is-pending");
+    box.answer.classList.add("is-error");
+    box.answer.replaceChildren(make("span", "ask-who", "Gemma"), make("p", null, message));
+  }
+
+  async function askQuestion(rawQuestion, allowGeneral = false) {
+    if (state.asking) return;
+    const question = String(rawQuestion || "").trim();
+    if (!state.notesId) {
+      els.askMessage.textContent = "Your notes aren't loaded. Please upload your file again.";
+      return;
+    }
+    if (!question) {
+      els.askMessage.textContent = "Type a question first.";
+      return;
+    }
+    els.askMessage.textContent = "";
+    const epoch = state.askEpoch;
+    state.asking = true;
+    els.askSubmit.disabled = true;
+
+    const box = addTurn(question, allowGeneral);
+    const started = Date.now();
+    clearInterval(state.askTimer);
+    state.askTimer = setInterval(() => {
+      box.waiting.textContent = `Gemma is reading your notes… ${Math.round((Date.now() - started) / 1000)}s`;
+    }, 1000);
+
+    try {
+      const data = await requestJSON(`/api/notes/${encodeURIComponent(state.notesId)}/ask`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question, allow_general: allowGeneral }),
+      });
+      if (epoch !== state.askEpoch) return; // the document changed while Gemma was thinking
+      fillAnswer(box, data, question, allowGeneral);
+      if (!allowGeneral) {
+        els.askInput.value = "";
+        els.askCount.textContent = "0 / 500";
+      }
+    } catch (err) {
+      if (epoch !== state.askEpoch) return;
+      failAnswer(box, err.message);
+    } finally {
+      if (epoch === state.askEpoch) {
+        clearInterval(state.askTimer);
+        state.askTimer = null;
+        state.asking = false;
+        els.askSubmit.disabled = false;
+        els.askInput.focus();
+        box.answer.scrollIntoView({ block: "nearest" });
+      }
+    }
+  }
+
+  els.askForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    askQuestion(els.askInput.value);
+  });
+
+  els.askInput.addEventListener("keydown", (event) => {
+    // Enter sends; Shift+Enter keeps normal multi-line typing. Ignore Enter while an IME is composing.
+    if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
+      event.preventDefault();
+      els.askForm.requestSubmit ? els.askForm.requestSubmit() : els.askSubmit.click();
+    }
+  });
+
+  els.askInput.addEventListener("input", () => {
+    els.askCount.textContent = `${els.askInput.value.length} / 500`;
   });
 
   checkHealth();

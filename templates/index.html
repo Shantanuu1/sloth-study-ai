@@ -26,15 +26,7 @@
   </header>
 
   <main id="main">
-    <!-- Error message (hidden until something goes wrong) -->
-    <!-- <section id="error-panel" class="card error-card" hidden role="alert">
-      <div>
-        <h2>That didn't work</h2>
-        <p id="error-message"></p>
-      </div>
-      <button type="button" id="error-dismiss" class="btn btn-ghost">Dismiss</button>
-    </section> -->
-
+    
     <!-- Step 0: upload -->
     <section id="upload-panel" class="card upload-card" aria-labelledby="upload-title">
       <h2 id="upload-title">Turn your notes into study material</h2>
@@ -87,6 +79,7 @@
         <button type="button" role="tab" id="tab-summary" data-tab="summary" aria-controls="panel-summary" aria-selected="true"><span class="step">1</span> Summary</button>
         <button type="button" role="tab" id="tab-flashcards" data-tab="flashcards" aria-controls="panel-flashcards" aria-selected="false" tabindex="-1"><span class="step">2</span> Flashcards</button>
         <button type="button" role="tab" id="tab-quiz" data-tab="quiz" aria-controls="panel-quiz" aria-selected="false" tabindex="-1"><span class="step">3</span> Quiz</button>
+        <button type="button" role="tab" id="tab-ask" data-tab="ask" aria-controls="panel-ask" aria-selected="false" tabindex="-1"><span class="step">4</span> Ask Notes</button>
       </div>
 
       <!-- 1. Summary -->
@@ -150,6 +143,28 @@
             <button type="submit" id="quiz-submit" class="btn btn-primary">Submit quiz</button>
             <button type="button" id="quiz-retake" class="btn btn-ghost" hidden>Retake quiz</button>
           </div>
+        </form>
+      </section>
+
+      <!-- 4. Ask Your Notes -->
+      <section id="panel-ask" role="tabpanel" aria-labelledby="tab-ask" class="card panel" hidden>
+        <h3>Ask Your Notes</h3>
+        <p class="muted">Ask Gemma a question about the file you uploaded. It answers from your notes only, and it will tell you honestly when your notes don't cover something. Follow-up questions remember the conversation.</p>
+        <p id="ask-source" class="ask-source"></p>
+
+        <div id="ask-thread" class="ask-thread" aria-live="polite">
+          <p id="ask-empty" class="ask-empty">No questions yet. Try: <em>"What are the main ideas in these notes?"</em></p>
+        </div>
+
+        <form id="ask-form" class="ask-form" novalidate>
+          <label for="ask-input" class="ask-label">Your question</label>
+          <textarea id="ask-input" rows="3" maxlength="500" placeholder="Type a question about your notes…"></textarea>
+          <div class="ask-row">
+            <span id="ask-count" class="muted" aria-hidden="true">0 / 500</span>
+            <button type="submit" id="ask-submit" class="btn btn-primary">Ask Gemma</button>
+          </div>
+          <p class="muted ask-tip">Press Enter to send, or Shift+Enter for a new line.</p>
+          <p id="ask-message" class="form-message" role="status"></p>
         </form>
       </section>
 

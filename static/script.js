@@ -101,15 +101,14 @@
     return data;
   }
 
-  function showError(message) {
-    els.errorMessage.textContent = message;
+ function showError(message) {
+    const errorText = String(message || "An unexpected error occurred.");
+    els.errorMessage.textContent = errorText;
     els.errorPanel.hidden = false;
     els.errorPanel.scrollIntoView({ block: "nearest" });
-  }
+}
 
-  function hideError() {
-    els.errorPanel.hidden = true;
-  }
+
 
   // ---------- local AI status ----------
 
@@ -227,11 +226,14 @@
       selectTab("summary");
       els.resultsTitle.focus();
     } catch (err) {
-      els.loadingPanel.hidden = true;
-      els.uploadPanel.hidden = false;
-      showError(err.message);
-      checkHealth();
-    } finally {
+    console.error("Sloth Study generation error:", err);
+
+    els.loadingPanel.hidden = true;
+    els.uploadPanel.hidden = false;
+
+    showError(err?.message || "An unexpected error occurred.");
+    checkHealth();
+} finally {
       stopTimer();
       els.generateBtn.disabled = false;
       els.sampleBtn.disabled = false;

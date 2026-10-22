@@ -2,3 +2,4 @@ flask>=3.0,<4
 requests>=2.31,<3
 pypdf>=4.0,<7
 pytest>=8.0,<10
+.\.venv-new\Scripts\python.exe -m pip install "flask>=3.0,<4"
